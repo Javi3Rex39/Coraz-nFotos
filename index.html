@@ -213,7 +213,7 @@ const heart  = document.getElementById('heart');
 const images = new Array(25).fill(null);
 
 /* ---- Compresion ---- */
-async function compressFile(file, maxSize=800, quality=0.7){
+async function compressFile(file, maxSize=1200, quality=0.82){
   return new Promise(resolve=>{
     const img=new Image(), r=new FileReader();
     r.onload=()=>{
@@ -232,9 +232,9 @@ async function compressFile(file, maxSize=800, quality=0.7){
   });
 }
 
-async function compressTo(file, limitKB=700){
-  let q=0.7, blob=await compressFile(file,800,q);
-  while(blob.size>limitKB*1024&&q>0.2){q-=0.1;blob=await compressFile(file,800,q);}
+async function compressTo(file, limitKB=900){
+  let q=0.82, blob=await compressFile(file,1200,q);
+  while(blob.size>limitKB*1024&&q>0.2){q-=0.1;blob=await compressFile(file,1200,q);}
   return blob;
 }
 
