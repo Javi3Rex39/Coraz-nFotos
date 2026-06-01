@@ -32,11 +32,11 @@ body{
 /* TE AMO */
 .teamo{
   display:flex;justify-content:center;
-  gap:clamp(24px,6vw,60px);margin-top:40px;
+  gap:clamp(12px,4vw,60px);margin-top:20px;
 }
-.word{display:flex;gap:clamp(10px,3vw,26px)}
+.word{display:flex;gap:clamp(6px,2vw,26px)}
 .letter{
-  font-size:clamp(86px,18vw,120px);font-weight:1000;line-height:1;
+  font-size:clamp(52px,13vw,120px);font-weight:1000;line-height:1;
   color:#d0d0d0;background-color:#d0d0d0;
   background-size:cover;background-position:center;
   -webkit-background-clip:text;background-clip:text;
@@ -46,7 +46,7 @@ body{
 
 /* CORAZON */
 .heart-wrapper{
-  width:100%;max-width:900px;margin:32px auto 0;
+  width:100%;max-width:900px;margin:16px auto 0;
   position:relative;aspect-ratio:1186/1112;
 }
 
@@ -58,37 +58,61 @@ body{
   background-position:center;
   cursor:pointer;
   transition:.2s;
-  display:flex;align-items:center;justify-content:center;
   overflow:hidden;
 }
-.photo-slot:hover .slot-overlay{opacity:1}
+
+/* Overlay: oculto por defecto, visible al tocar/hover */
 .slot-overlay{
   position:absolute;inset:0;
-  background:rgba(0,0,0,.45);
-  display:flex;align-items:center;justify-content:center;
-  gap:10px;
+  display:flex;align-items:flex-end;justify-content:flex-end;
+  padding:4px;
   opacity:0;transition:.2s;
+  pointer-events:none;
 }
-.slot-overlay.always{opacity:1;background:rgba(0,0,0,.08)}
+.photo-slot:hover .slot-overlay,
+.photo-slot.active .slot-overlay{
+  opacity:1;
+  pointer-events:all;
+}
+
+/* Slot vacio: mostrar icono + pequeno en esquina siempre */
+.photo-slot.empty::after{
+  content:'+';
+  position:absolute;
+  bottom:3px;right:4px;
+  font-size:clamp(10px,2.5vw,16px);
+  color:#aaa;
+  line-height:1;
+  pointer-events:none;
+}
+
 .slot-btn{
-  width:36px;height:36px;border:0;border-radius:50%;
-  font-size:16px;cursor:pointer;
+  width:clamp(20px,5vw,30px);
+  height:clamp(20px,5vw,30px);
+  border:0;border-radius:50%;
+  font-size:clamp(10px,2.5vw,14px);
+  cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   transition:.15s;
+  flex-shrink:0;
 }
-.slot-btn-add{background:#fff;color:#111}
-.slot-btn-add:hover{background:#eee}
-.slot-btn-del{background:#ff4d6d;color:#fff}
-.slot-btn-del:hover{background:#e63558}
+.slot-btn-add{background:rgba(255,255,255,.9);color:#111}
+.slot-btn-add:active{background:#eee}
+.slot-btn-del{background:#ff4d6d;color:#fff;margin-right:3px}
+.slot-btn-del:active{background:#e63558}
 .slot-input{display:none}
 
 /* ESTADO */
 #estado{
-  margin-top:16px;font-size:13px;color:#888;text-align:center;min-height:20px;
+  margin-top:12px;font-size:12px;color:#888;text-align:center;min-height:18px;
 }
 
 /* RESPONSIVE */
-@media(max-width:600px){body{padding:10px}.heart-wrapper{margin-top:20px}}
+@media(max-width:600px){
+  body{padding:8px}
+  .heart-wrapper{margin-top:10px}
+  .teamo{margin-top:14px}
+}
 </style>
 </head>
 <body>
@@ -239,21 +263,27 @@ function applyLetter(index, imgUrl){
 
 /* ---- Aplicar imagen a slot del corazon ---- */
 function applySlot(index, imgUrl){
-  // index 5-24 -> layout 0-19
   const slotEl = document.getElementById(`slot_${index}`);
   if(!slotEl) return;
-  const overlay = slotEl.querySelector('.slot-overlay');
-  const delBtn  = slotEl.querySelector('.slot-btn-del');
+  const delBtn = slotEl.querySelector('.slot-btn-del');
   if(imgUrl){
     slotEl.style.backgroundImage=`url('${imgUrl}')`;
-    overlay.classList.remove('always');
+    slotEl.classList.remove('empty');
     if(delBtn) delBtn.style.display='flex';
   } else {
     slotEl.style.backgroundImage='';
-    overlay.classList.add('always');
+    slotEl.classList.add('empty');
     if(delBtn) delBtn.style.display='none';
   }
 }
+
+/* ---- Toggle overlay en movil al tocar ---- */
+let activeSlot = null;
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.photo-slot')){
+    if(activeSlot){ activeSlot.classList.remove('active'); activeSlot=null; }
+  }
+});
 
 /* ---- Construir los slots del corazon en el DOM ---- */
 function buildHeart(){
@@ -261,7 +291,7 @@ function buildHeart(){
   for(let i=5;i<25;i++){
     const l = LAYOUT[i-5];
     const div = document.createElement('div');
-    div.className='photo-slot';
+    div.className='photo-slot empty';
     div.id=`slot_${i}`;
     div.style.cssText=`left:${l.left};top:${l.top};width:${l.width};height:${l.height}`;
 
@@ -270,29 +300,37 @@ function buildHeart(){
     inp.type='file';inp.accept='image/*';inp.className='slot-input';
     inp.id=`input_${i}`;
 
-    // Overlay
+    // Overlay (esquina inferior derecha)
     const overlay = document.createElement('div');
-    overlay.className='slot-overlay always';
+    overlay.className='slot-overlay';
 
-    // Boton agregar/reemplazar
-    const addBtn = document.createElement('button');
-    addBtn.className='slot-btn slot-btn-add';
-    addBtn.title='Agregar foto';
-    addBtn.innerHTML='&#43;';
-    addBtn.onclick=(e)=>{e.stopPropagation();inp.click();};
-
-    // Boton eliminar
+    // Boton eliminar (izquierda del add)
     const delBtn = document.createElement('button');
     delBtn.className='slot-btn slot-btn-del';
-    delBtn.title='Eliminar foto';
+    delBtn.title='Eliminar';
     delBtn.innerHTML='&#10005;';
     delBtn.style.display='none';
     delBtn.onclick=(e)=>{e.stopPropagation();eliminarFoto(i);};
 
+    // Boton agregar/reemplazar
+    const addBtn = document.createElement('button');
+    addBtn.className='slot-btn slot-btn-add';
+    addBtn.title='Foto';
+    addBtn.innerHTML='&#43;';
+    addBtn.onclick=(e)=>{e.stopPropagation();inp.click();};
+
     inp.onchange=()=>{if(inp.files[0]) subirFoto(i,inp.files[0]);inp.value='';};
 
-    overlay.appendChild(addBtn);
+    // Toque en movil: primer tap activa overlay, segundo tap en + abre galeria
+    div.addEventListener('click', e=>{
+      if(e.target===addBtn||e.target===delBtn) return;
+      if(activeSlot&&activeSlot!==div){ activeSlot.classList.remove('active'); }
+      div.classList.toggle('active');
+      activeSlot = div.classList.contains('active') ? div : null;
+    });
+
     overlay.appendChild(delBtn);
+    overlay.appendChild(addBtn);
     div.appendChild(inp);
     div.appendChild(overlay);
     heart.appendChild(div);
