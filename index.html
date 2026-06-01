@@ -232,7 +232,7 @@ async function compressFile(file, maxSize=1600, quality=0.88){
   });
 }
 
-async function compressTo(file, limitKB=900){
+async function compressTo(file, limitKB=680){
   let q=0.88, blob=await compressFile(file,1600,q);
   while(blob.size>limitKB*1024&&q>0.2){q-=0.1;blob=await compressFile(file,1600,q);}
   return blob;
