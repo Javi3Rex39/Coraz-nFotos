@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CORAZON DE FOTOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Poppins,system-ui}
 body{
   min-height:100vh;
-  background:#0d0d1a;
+  background:#0e1128;
   padding:16px;
   display:flex;
   flex-direction:column;
@@ -28,9 +30,9 @@ body{
 
 /* CARGA */
 #loading-screen{
-  position:fixed;inset:0;background:#0d0d1a;
+  position:fixed;inset:0;background:#0e1128;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:100;gap:16px;font-size:18px;color:#888;
+  z-index:100;gap:16px;font-size:18px;color:#9aa0cc;
 }
 #loading-screen.hidden{display:none}
 .spinner{
@@ -47,15 +49,16 @@ body{
 }
 .word{display:flex;gap:clamp(6px,2vw,26px)}
 .letter{
-  font-size:clamp(52px,13vw,120px);font-weight:1000;line-height:1;
-  color:#2a2a3a;background-color:#2a2a3a;
+  font-size:clamp(52px,13vw,120px);font-weight:700;line-height:1;
+  font-family:'Dancing Script',cursive;
+  color:#927bd1;background-color:#927bd1;
   background-size:cover;background-position:center;
   -webkit-background-clip:text;background-clip:text;
   transition:1s;
 }
 .letter.filled{
   color:transparent;
-  filter:drop-shadow(0 0 8px rgba(255,77,109,.5));
+  filter:drop-shadow(0 0 12px rgba(255,150,180,.6)) drop-shadow(0 0 24px rgba(255,180,210,.3));
 }
 
 /* CORAZON */
@@ -67,13 +70,13 @@ body{
 /* SLOT */
 .photo-slot{
   position:absolute;
-  background:#1a1a2e;
+  background:#2e3460;
   background-size:cover;
   background-position:center;
   cursor:pointer;
   transition:.2s;
   overflow:hidden;
-  border:1px solid rgba(255,77,109,.15);
+  border:1px solid rgba(140,160,255,.3);
 }
 .photo-slot:not(.empty){
   filter:drop-shadow(0 0 4px rgba(255,77,109,.3));
@@ -422,12 +425,19 @@ function initBg(){
   resize();
 
   // Orbes de nebulosa
-  const orbs = Array.from({length:5}, ()=>({
+  const orbs = [
+    {hue:230, sat:70},  // azul medio
+    {hue:260, sat:65},  // lavanda
+    {hue:210, sat:70},  // azul cielo
+    {hue:280, sat:60},  // violeta suave
+    {hue:200, sat:65},  // azul pastel
+    {hue:245, sat:60},  // indigo suave
+  ].map(o=>({
+    ...o,
     x: Math.random()*W,
     y: Math.random()*H,
-    r: 150 + Math.random()*250,
-    hue: 290 + Math.random()*80,  // morado a rosa
-    speed: 0.15 + Math.random()*0.2,
+    r: 180 + Math.random()*280,
+    speed: 0.12 + Math.random()*0.18,
     angle: Math.random()*Math.PI*2,
   }));
 
@@ -443,15 +453,16 @@ function initBg(){
     ctx.restore();
   }
 
-  const particles = Array.from({length:28}, ()=>({
+  const particles = Array.from({length:40}, ()=>({
     x: Math.random()*W,
     y: Math.random()*H + H,
-    size: 3 + Math.random()*9,
-    speed: 0.3 + Math.random()*0.6,
-    drift: (Math.random()-.5)*0.4,
-    opacity: 0.08 + Math.random()*0.18,
+    size: 4 + Math.random()*12,
+    speed: 0.4 + Math.random()*0.8,
+    drift: (Math.random()-.5)*0.5,
+    opacity: 0.15 + Math.random()*0.3,
+    hue: [220,240,260,280,320][Math.floor(Math.random()*5)],
     rot: Math.random()*Math.PI*2,
-    rotSpeed: (Math.random()-.5)*0.02,
+    rotSpeed: (Math.random()-.5)*0.025,
   }));
 
   let t = 0;
@@ -469,11 +480,21 @@ function initBg(){
       if(o.y < -o.r) o.y = H + o.r;
       if(o.y > H+o.r) o.y = -o.r;
       const g = ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r);
-      g.addColorStop(0, `hsla(${o.hue},80%,55%,0.07)`);
-      g.addColorStop(1, `hsla(${o.hue},80%,55%,0)`);
+      g.addColorStop(0,   `hsla(${o.hue},${o.sat}%,85%,0.38)`);
+      g.addColorStop(0.3, `hsla(${o.hue},${o.sat}%,75%,0.18)`);
+      g.addColorStop(0.7, `hsla(${o.hue},${o.sat}%,65%,0.07)`);
+      g.addColorStop(1,   `hsla(${o.hue},${o.sat}%,70%,0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+      ctx.fill();
+      // destello central
+      const gCore = ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*0.18);
+      gCore.addColorStop(0, `hsla(${o.hue},100%,95%,0.22)`);
+      gCore.addColorStop(1, `hsla(${o.hue},100%,95%,0)`);
+      ctx.fillStyle = gCore;
+      ctx.beginPath();
+      ctx.arc(o.x,o.y,o.r*0.18,0,Math.PI*2);
       ctx.fill();
     });
 
@@ -483,9 +504,22 @@ function initBg(){
       p.x += p.drift;
       p.rot += p.rotSpeed;
       if(p.y < -20){ p.y=H+20; p.x=Math.random()*W; }
+      const color = `hsl(${p.hue + Math.sin(t+p.x)*15},90%,78%)`;
+      // halo exterior
+      ctx.save();
+      ctx.globalAlpha = p.opacity * 0.35;
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = 14;
+      ctx.fillStyle   = color;
+      heartPath(ctx, p.x, p.y, p.size * 1.35);
+      ctx.fill();
+      ctx.restore();
+      // corazon principal
       ctx.save();
       ctx.globalAlpha = p.opacity;
-      ctx.fillStyle = `hsl(${340 + Math.sin(t+p.x)*20},80%,70%)`;
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = 8;
+      ctx.fillStyle   = color;
       heartPath(ctx, p.x, p.y, p.size);
       ctx.fill();
       ctx.restore();
